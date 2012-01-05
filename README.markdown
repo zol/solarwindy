@@ -10,8 +10,12 @@ The solarwindy is an arduino based Autonomous Weather Station. It uploads weathe
 * Robustness: Given the price constraint, maintain a level of hardware and software robustness that will ensure the solarwindy survives outdoors and is easy to debug given any issues.
 * Community: The project is totally open source, anyone can contribute improvements, fixes and documentation.
 
-# Instructions
+# Instructions and Parts List
 
 Coming soon, in the meantime, this is Rodney:
 
 ![Rodney](https://github.com/zol/solarwindy/raw/master/rodney.gif)
+
+# News
+
+4th Jan 2012 - Project is started. I have the arduino, anemometer, wind vane and temperature sensor and am commencing work on writing an initial prototype of the software.
