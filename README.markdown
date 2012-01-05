@@ -14,7 +14,7 @@ The solarwindy is an arduino based Autonomous Weather Station. It uploads weathe
 
 Coming soon, in the meantime, this is Rodney:
 
-<div style="float: right"><img alt="Rodney" src="https://github.com/zol/solarwindy/raw/master/rodney.gif"></div>
+<div style="float: right"><img class="background-color: red;" alt="Rodney" src="https://github.com/zol/solarwindy/raw/master/rodney.gif"></div>
 
 # News
 
