@@ -5,7 +5,6 @@
 // Zoltan Olah (zol@me.com) released under the MIT license on Jan 13 2012.
 
 #include "ObservationStore.h"
-//#include <cstddef>
 #include <stddef.h>
 
 ObservationStore::~ObservationStore() {

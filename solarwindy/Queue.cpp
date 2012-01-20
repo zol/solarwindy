@@ -3,7 +3,7 @@
 // Zoltan Olah (zol@me.com) released under the MIT license on Jan 13 2012.
 
 #include "Queue.h"
-#include <cstddef>
+#include <stddef.h>
 
 // Advance the Iterator to the next node. If the node is advanced it returns
 // true, otherwise we are at the end of the list.
@@ -31,7 +31,9 @@ Queue::Queue() {
 }
 
 Queue::~Queue() {
-  // reclaim heap memory, node are destroyed in pop()
+  // reclaim heap memory, nodes are destroyed in pop()
+  // NOTE: we assume caller holds references to data and will clean up
+  // appropriately
   void *data;
   
   do {

@@ -22,7 +22,7 @@ CXXFLAGS += -g -Wall -Wextra
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = Queue_unittest
+TESTS = Queue_unittest ObservationStore_unittest
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -77,8 +77,17 @@ gtest_main.a : gtest-all.o gtest_main.o
 Queue.o : $(USER_DIR)/Queue.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/Queue.cpp
 
+ObservationStore.o : $(USER_DIR)/ObservationStore.cpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ObservationStore.cpp
+
 Queue_unittest.o : $(TEST_DIR)/Queue_unittest.cc $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(TEST_DIR)/Queue_unittest.cc
 
 Queue_unittest : Queue.o Queue_unittest.o gtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+ObservationStore_unittest.o : $(TEST_DIR)/ObservationStore_unittest.cc $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(TEST_DIR)/ObservationStore_unittest.cc
+
+ObservationStore_unittest : Queue.o ObservationStore.o ObservationStore_unittest.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
