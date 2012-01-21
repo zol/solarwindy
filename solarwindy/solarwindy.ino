@@ -11,6 +11,8 @@
 #include "ArgentVane.h"
 #include "TMP36TempSensor.h"
 #include "ObservationStore.h"
+#include "Logger.h"
+#include "MemoryFree.h"
 
 const int kTransmitInterval = 10; // Min intervals we use between transmits
 const int kReadInterval = 5; // Sec intervals we read and log the sensors
@@ -21,15 +23,19 @@ unsigned long lastTransmitTime = 0; // As above
 ArgentAnemometer anemometer(2);
 ArgentVane vane(A0);
 TMP36TempSensor temp(A1);
-
 ObservationStore store(120); // 10 minutes worth of observations
 
 void setup() {
+  Logger::Init();
+
   vane.Init();
   temp.Init();
   anemometer.Init();
-  
-  Serial.begin(9600); // for debugging
+
+  if (store.Init() == false)
+    Logger::Fatal("ObservationStore Init() failed. Check free memory.");
+    
+  Logger::Printf("Solarwindy initalized. Free Memory: %d bytes.\n", freeMemory());
 }
 
 void loop() {
@@ -48,29 +54,21 @@ void loop() {
     ObservationStore::Observation observation;
     observation.wind_speed = anemometer.ComputeKnots();
     observation.wind_segment = vane.ComputeSegment();
-    observation.temp = temp.ComputeCelsius();
     observation.time = time;
-    
+
     store.Add(observation);
     
-    // Serial.print("Speed in knots: ");
-    // Serial.println(anemometer.ComputeKnots());
-    // 
-    // Serial.print("Direction: ");
-    // Serial.println(vane.ComputeDirection());
-    // 
-    // Serial.print("Temp in celsius: ");
-    // Serial.println(temp.ComputeCelsius());
+    Logger::PrintReading(temp.ComputeCelsius(), observation.wind_speed,
+      vane.ComputeDirection(), time);
   }
   
   //  This block will run every kTransmitInterval
   if (transmitInterval >= (kTransmitInterval * 1000 * 60)) {
     lastTransmitTime = time;
-    
+
     ObservationStore::AggregateObservation aggregate = 
       store.ComputeAggregate();
-      
+
     // TODO: log + upload the values
   }
 }
-

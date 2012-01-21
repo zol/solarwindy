@@ -13,7 +13,8 @@ class ArgentVane : public AnalogSensor {
   explicit ArgentVane(int pin) : AnalogSensor(pin) {}
   char const *ComputeDirection();
   float ComputeDegrees();
-  int ComputeSegment() { return FindSegment(value()); }
+  unsigned char ComputeSegment() { return FindSegment(value()); }
+  void Test();
 
  private:
   static const int kNumSegments = 16;
@@ -21,7 +22,7 @@ class ArgentVane : public AnalogSensor {
   static const float kDegrees[];
   static const char *kDirections[];
 
-  int FindSegment(int voltage);
+  unsigned char FindSegment(int voltage);
 };
 
 #endif

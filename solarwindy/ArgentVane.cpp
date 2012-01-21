@@ -41,10 +41,10 @@ const char *ArgentVane::kDirections[kNumSegments] =
     "NNW", "N", "WNW", "NW", "W"};
 
 // Find which segment (as an array index) the voltage belongs to
-int ArgentVane::FindSegment(int voltage) {
-  for (int i = kNumSegments - 1; i >= 0; i--) {
+unsigned char ArgentVane::FindSegment(int voltage) {
+  for (unsigned int i = kNumSegments - 1; i >= 0; i--) {
     if (voltage >= kThresholds[i])
-      return i;
+      return static_cast<unsigned char>(i);
   }
   
   return -1;  // couldn't find it
@@ -57,5 +57,5 @@ char const *ArgentVane::ComputeDirection() {
 
 // Map the segment to the direction in degrees
 float ArgentVane::ComputeDegrees() {
-  return kDegrees[FindSegment(value())];
+  return kDegrees[FindSegment(value())];  
 }

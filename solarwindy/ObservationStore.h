@@ -4,18 +4,16 @@
 #ifndef SOLARWINDY_OBSERVATIONSTORE_H
 #define SOLARWINDY_OBSERVATIONSTORE_H
 
-#include "Queue.h"
-
-// Stores observations and computes and aggregate over the collection. 
-// The store can have a maximum size in which case old (first in) values 
-// are discarded to make way for new ones when size reaches the maximum
+// Stores observations and computes an aggregate over the collection.
+// The store must specify a size, it will allocate all of the memory
+// it needs when constructed. Old (first in) values are discarded to make way 
+// for new ones.
 class ObservationStore {
  public:
   // An observation is a collection of sensor readings
   struct Observation {
     float wind_speed;
-    int wind_segment;
-    float temp;
+    unsigned char wind_segment;
     unsigned long time;
   };
   
@@ -24,24 +22,26 @@ class ObservationStore {
     float average_wind_speed;
     float wind_gust;
     unsigned long wind_gust_time;
-    int wind_gust_segment;
-    int most_frequent_wind_segment;
-    float average_temp;
+    unsigned char wind_gust_segment;
+    unsigned char most_frequent_wind_segment;
     unsigned long elapsed_time;
   };
   
-  // Use 0 for no maximum size
-  explicit ObservationStore(unsigned long max_size) : max_size_(max_size) {}
+  explicit ObservationStore(unsigned int size);
   virtual ~ObservationStore();
   
+  bool Init();
   void Add(Observation observation);
   AggregateObservation ComputeAggregate();
-  unsigned long Size() { return queue_.size(); }
+  unsigned int size() { return size_; }
+  unsigned int observation_count() { return observation_count_; }
   
  private:
   static const int kNumSegments = 16;
-  Queue queue_;
-  unsigned long max_size_;
+  Observation *observations_;
+  unsigned int size_;
+  unsigned int next_position_;
+  unsigned int observation_count_;
 };
 
 #endif

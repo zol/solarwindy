@@ -1,32 +1,45 @@
-// The ObservationStore gathers weather observations. You can set a max
-// value and it will drop old readings when the store fills to it's max.
+// The ObservationStore gathers weather observations. You must specify a size
+// and it will drop old readings when the store fills up.
 // This is useful for say keeping the last 5 minute's worth of 
 // observations. The store is also used to compute an aggregate of the data.
+// The store used to (can be) backed by a Queue, but I've rewritten it to
+// use a dynamic array instead for a smaller memory footprint.
 // Zoltan Olah (zol@me.com) released under the MIT license on Jan 13 2012.
 
 #include "ObservationStore.h"
 #include <stddef.h>
+#include <stdlib.h>
+
+bool ObservationStore::Init() {
+  // we must use malloc because arduino doesn't support new[]
+  observations_ = 
+      static_cast<Observation *>(malloc(size_ * sizeof(Observation)));
+      
+  return observations_ != NULL;
+}
+
+ObservationStore::ObservationStore(unsigned int size) {
+  size_ = size;
+  next_position_ = observation_count_ = 0;
+  observations_ = NULL;
+}
 
 ObservationStore::~ObservationStore() {
-  Observation *disgard;
-  
-  do {
-    disgard = static_cast<Observation *>(queue_.Pop());
-    if (disgard != NULL)
-      delete disgard;
-  } while(disgard != NULL);
+  free(observations_);
 }
 
 // Add an observation and push one out if we are maxxed
 void ObservationStore::Add(Observation observation) {
-  Observation *pObservation = new Observation(observation);
-  queue_.Push(pObservation);
+  observations_[next_position_] = observation;
+  next_position_++;
   
-  // If we just stepped over the max size, pop an item off the queue
-  if (max_size_ != 0 && queue_.size() > max_size_) {
-    Observation *disgard = static_cast<Observation *>(queue_.Pop());
-    delete disgard;
-  }
+  // Rollover and start writing to the beginning again
+  if (next_position_ == size_)
+    next_position_ = 0;
+  
+  // Increment the number of stored observations till we reach size
+  if (observation_count_ < size_)
+    observation_count_++;
 }
 
 // Calculate the aggregate of all the values in the store. Calculate
@@ -37,19 +50,16 @@ ObservationStore::AggregateObservation ObservationStore::ComputeAggregate() {
   float wind_speed_accumulator = 0.0;
   float wind_gust = 0.0;
   unsigned long wind_gust_time = 0;
-  int wind_gust_segment = 0;
-  float temp_accumulator = 0.0;
-  int wind_segment_counts[kNumSegments];
+  unsigned char wind_gust_segment = 0;
+  unsigned char wind_segment_counts[kNumSegments];
   unsigned long min_time = 0;
   unsigned long max_time = 0;
   
   for (int i = 0; i < kNumSegments; i++)
     wind_segment_counts[i] = 0;
 
-  Queue::Iterator it = queue_.Begin();
-
-  do {
-    Observation *observation = static_cast<Observation *>(it.Data());
+  for (unsigned int i = 0; i < observation_count_; i++) {
+    Observation *observation = &observations_[i];
     
     wind_speed_accumulator += observation->wind_speed;
     
@@ -58,8 +68,6 @@ ObservationStore::AggregateObservation ObservationStore::ComputeAggregate() {
       wind_gust_time = observation->time;
       wind_gust_segment = observation->wind_segment;
     }
-    
-    temp_accumulator += observation->temp;
     
     // record the segment unless it's out of acceptable range
     if (observation->wind_segment > 0 && 
@@ -74,7 +82,7 @@ ObservationStore::AggregateObservation ObservationStore::ComputeAggregate() {
       max_time = observation->time;
     
     count++;
-  } while(it.Advance() != false);
+  }
   
   AggregateObservation aggregate;
   aggregate.average_wind_speed = wind_speed_accumulator / count;
@@ -92,7 +100,6 @@ ObservationStore::AggregateObservation ObservationStore::ComputeAggregate() {
     }
   }
   
-  aggregate.average_temp = temp_accumulator / count;
   aggregate.elapsed_time = max_time - min_time;
   
   return aggregate;
