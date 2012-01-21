@@ -47,6 +47,6 @@ void Logger::PrintReading(float temp, float wind_speed,
   dtostrf(temp, 3, 2, temp_buffer);
   dtostrf(wind_speed, 3, 2, wind_speed_buffer);
   
-  Printf("-- Temp %sc, Wind %skn %s at %d seconds since boot.\n",
+  Printf("-- Temp %sc, Wind %skn %s at %u seconds since boot.\n",
     temp_buffer, wind_speed_buffer, direction, (time / 1000));
 }
