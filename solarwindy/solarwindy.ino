@@ -14,16 +14,19 @@
 #include "Logger.h"
 #include "MemoryFree.h"
 
-const int kTransmitInterval = 10; // Min intervals we use between transmits
+const int kTransmitInterval = 1; // Min intervals we use between transmits
 const int kReadInterval = 5; // Sec intervals we read and log the sensors
+const int kDebugLedPin = 13; // We flash this led to signal program flow
 
 unsigned long lastReadTime = 0; // Used to calculate the next time to read
 unsigned long lastTransmitTime = 0; // As above
 
+unsigned int debug_led_state = LOW;
+
 ArgentAnemometer anemometer(2);
 ArgentVane vane(A0);
 TMP36TempSensor temp(A1);
-ObservationStore store(120); // 10 minutes worth of observations
+ObservationStore store(12); // 1 minute worth of observations
 
 void setup() {
   Logger::Init();
@@ -31,6 +34,8 @@ void setup() {
   vane.Init();
   temp.Init();
   anemometer.Init();
+
+  pinMode(kDebugLedPin, OUTPUT);
 
   if (store.Init() == false)
     Logger::Fatal("ObservationStore Init() failed. Check free memory.");
@@ -46,6 +51,11 @@ void loop() {
   //  This block will run every kReadInterval
   if (readInterval >= (kReadInterval * 1000)) {
     lastReadTime = time;
+    
+    // flip the led each time we go aroudn the loop
+    debug_led_state = debug_led_state == HIGH ? LOW : HIGH;
+    digitalWrite(kDebugLedPin, debug_led_state);
+
     vane.Read();
     temp.Read();
     anemometer.Read(readInterval);
@@ -63,12 +73,20 @@ void loop() {
   }
   
   //  This block will run every kTransmitInterval
-  if (transmitInterval >= (kTransmitInterval * 1000 * 60)) {
+  if (transmitInterval >= (static_cast<unsigned long>(kTransmitInterval) * 1000 * 60)) {
     lastTransmitTime = time;
 
-    ObservationStore::AggregateObservation aggregate = 
+    ObservationStore::AggregateObservation ao = 
       store.ComputeAggregate();
 
-    // TODO: log + upload the values
+    Logger::PrintAggregateReading(ao.average_wind_speed, 
+      ao.wind_gust, 
+      ao.wind_gust_time, 
+      ArgentVane::SegmentToDirection(ao.wind_gust_segment),
+      ArgentVane::SegmentToDirection(ao.most_frequent_wind_segment), 
+      ao.elapsed_time,
+      time);
+    
+    // TODO: upload the aggregate values
   }
 }
