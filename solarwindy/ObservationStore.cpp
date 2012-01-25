@@ -63,7 +63,7 @@ ObservationStore::AggregateObservation ObservationStore::ComputeAggregate() {
     
     wind_speed_accumulator += observation->wind_speed;
     
-    if (observation->wind_speed > wind_gust) {
+    if (observation->wind_speed >= wind_gust) {
       wind_gust = observation->wind_speed;
       wind_gust_time = observation->time;
       wind_gust_segment = observation->wind_segment;
