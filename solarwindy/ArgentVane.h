@@ -14,7 +14,8 @@ class ArgentVane : public AnalogSensor {
   char const *ComputeDirection();
   float ComputeDegrees();
   unsigned char ComputeSegment() { return FindSegment(value()); }
-  void Test();
+  static const char *SegmentToDirection(unsigned char segment)
+      { return kDirections[segment]; }
 
  private:
   static const int kNumSegments = 16;
