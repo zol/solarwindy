@@ -1,0 +1,49 @@
+<head>
+  <title>Skybob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+  {{> body}}
+</body>
+
+<template name="body">
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <!--Body content-->
+          <img id="skybob" src="skybob.png"/>
+          <h1>Skybob's Observations</h1>
+          <p class="lead">He's watching us. From <a href="http://github.com/zol/solarwindy">up there</a>...</p>
+          {{> observations}}
+        </div>
+      </div>
+    </div>
+</template>
+
+<template name="observations">
+  <div class="observations">
+    <table class="table table-bordered table-striped">
+      <thead>
+        <th>Wind Speed</th>
+        <th>Wind Direction</th>
+        <th>Temperature</th>
+        <th>Time</th>
+      </thead>
+      <tbody>
+        {{#each observations}}
+          {{> observation}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<template name="observation">
+    <tr>
+        <td>{{windSpeed}}</td>
+        <td>{{windDirection}}</td>
+        <td>{{temp}}</td>
+        <td>{{formattedDate date}}</td>
+    </tr>
+</template>
