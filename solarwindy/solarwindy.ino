@@ -1,7 +1,9 @@
-// Arduino Sketch for solarwindy, a an autonomous
+// Arduino Sketch for solarwindy, a solar powered quad band autonomous
 // weather station (http://www.github.com/zol/solarwindy).
 //
-// At every kTransmitInterval, we read the sensors and upload them via http GET.
+// 1. We read the sensors every kReadInterval.
+// 2. We keep a rolling store of kTransmitInterval's worth of data.
+// 3. At every kTransmitInterval, we upload a summary of our stored data.
 //
 // Zoltan Olah (zol@me.com) released under the MIT license on Jan 13 2012.
 
@@ -14,8 +16,8 @@
 #include "MemoryFree.h"
 #include "ObservationStore.h"
 
-const char *kHost = "10.0.1.6"; // Host running skybob.
-const int kPort = 3000; // Skybob's port.
+const char *kHost = "skybob.meteor.com"; // Host running skybob.
+const int kPort = 80; // Skybob's port.
 
 const int kTransmitInterval = 5; // Sec intervals we use between transmits
 const int kDebugLedPin = 5; // We flash this led to signal program flow
@@ -37,61 +39,25 @@ void setup() {
   
   Logger::Printf("Obtaining dhcp lease...\n");
   Ethernet.begin(mac);
+  
+  delay(1000);
+    Logger::Printf("Transmitting...");
+    if (client.connect("skybob.meteor.com", 80)) {
+      client.print("GET / HTTP/1.1\r\n\r\n");  
+      Logger::Printf("done\n");
+    } else {
+      Logger::Debug("Failed to connect to host.");
+    }
 
-  vane.Init();
-  temp.Init();
-  anemometer.Init();
-
-  pinMode(kDebugLedPin, OUTPUT);
-
-  Logger::Printf("Solarwindy initalized. Free Memory: %d bytes. IP Address:", freeMemory());
-  Serial.println(Ethernet.localIP());
 }
 
 void transmit(EthernetClient *client, float temp, float wind_speed, const char *direction) {
-  char body[256];
-  char temp_buffer[16];
-  char wind_speed_buffer[16];
-  
-  dtostrf(temp, 3, 2, temp_buffer);
-  dtostrf(wind_speed, 3, 2, wind_speed_buffer);
-  
-  snprintf(body, 256, "GET /create_observation?windSpeed=%s&windDirection=%s&temp=%s HTTP/1.1\r\n\r\n",
-    wind_speed_buffer, direction, temp_buffer);
-  
-  Logger::Printf("Transmitting...");
-  if (client->connect(kHost, kPort)) {
-    client->print(body);  
-    Logger::Printf("done\n");
-  } else {
-    Logger::Debug("Failed to connect to host.");
-  }
 }
 
 void loop() {
-  unsigned long time = millis(); //  Current time since boot up
-  unsigned long transmitInterval = time - lastTransmitTime;
 
-  //  This block will run every kReadInterval
-  if (transmitInterval >= (kTransmitInterval * 1000)) {
-    lastTransmitTime = time;
-    
-    // flip the led each time we go aroudn the loop
-    debug_led_state = debug_led_state == HIGH ? LOW : HIGH;
-    digitalWrite(kDebugLedPin, debug_led_state);
-
-    vane.Read();
-    temp.Read();
-    anemometer.Read(transmitInterval);
-    anemometer.ResetTicks();
-
-    Logger::PrintReading(temp.ComputeCelsius(), anemometer.ComputeKnots(),
-      vane.ComputeDirection(), time);
-    transmit(&client, temp.ComputeCelsius(), anemometer.ComputeKnots(),
-      vane.ComputeDirection());
-  }
-  
+ 
   // chomp up bytes and ensure we disconnect to allow future requests to work.
-  if (client.available()) { char c = client.read(); }
+  if (client.available()) { char c = client.read(); Serial.print(c);}
   if (!client.connected()) { client.stop(); }
 }
